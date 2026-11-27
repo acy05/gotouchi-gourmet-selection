@@ -37,28 +37,31 @@ moreProducts.addEventListener('click', () => {
 filters.hidden = false;
 updateProducts();
 
-const contactForm = document.querySelector('#contact-draft');
+const contactForm = document.querySelector('#contact-form');
+const contactFields = document.querySelector('#contact-fields');
+const contactHelp = document.querySelector('#contact-help');
+const contactSubmit = document.querySelector('#contact-submit');
+const contactStatus = document.querySelector('#contact-status');
 const bulkFields = document.querySelector('#bulk-fields');
-const contactResult = document.querySelector('#contact-result');
-const contactText = document.querySelector('#contact-text');
-const copyStatus = document.querySelector('#copy-status');
 const topic = contactForm.elements.namedItem('topic');
 const message = contactForm.elements.namedItem('message');
+const endpoint = contactForm.dataset.endpoint;
 
-topic.addEventListener('change', () => {
+function updateBulkFields() {
   const isBulkOrder = topic.selectedIndex === 0;
   bulkFields.hidden = !isBulkOrder;
-  bulkFields.disabled = !isBulkOrder;
-});
+  for (const field of bulkFields.querySelectorAll('input')) {
+    field.disabled = !isBulkOrder;
+  }
+}
 
-contactForm.addEventListener('input', () => {
-  message.setCustomValidity('');
-  contactResult.hidden = true;
-  copyStatus.textContent = '';
-});
+topic.addEventListener('change', updateBulkFields);
+message.addEventListener('input', () => message.setCustomValidity(''));
 
-contactForm.addEventListener('submit', event => {
+contactForm.addEventListener('submit', async event => {
   event.preventDefault();
+  if (!endpoint || contactSubmit.disabled) return;
+
   const fields = new FormData(contactForm);
   const details = fields.get('message').trim();
   if (!details) {
@@ -66,26 +69,43 @@ contactForm.addEventListener('submit', event => {
     message.reportValidity();
     return;
   }
-  const lines = ['店舗：八王子川口店', `ご用件：${fields.get('topic')}`];
-  const items = fields.get('items')?.trim();
-  const pickup = fields.get('pickup');
-  if (items) lines.push(`商品名・数量：${items}`);
-  if (pickup) lines.push(`希望受取日：${pickup}`);
-  lines.push('', 'ご相談内容', details);
-  contactText.value = lines.join('\n');
-  contactResult.hidden = false;
-  contactText.focus();
-});
 
-document.querySelector('#copy-inquiry').addEventListener('click', async () => {
+  fields.set('message', details);
+  fields.set('store', '八王子川口店');
+  contactFields.disabled = true;
+  contactSubmit.disabled = true;
+  contactStatus.removeAttribute('data-error');
+  contactStatus.textContent = '送信中です。';
+
   try {
-    await navigator.clipboard.writeText(contactText.value);
-    copyStatus.textContent = 'コピーしました。公式フォームの「お問い合わせ内容」に貼り付けてください。';
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      body: fields,
+      headers: { Accept: 'application/json' },
+      credentials: 'omit',
+      redirect: 'error',
+      signal: AbortSignal.timeout(15000),
+    });
+    const result = await response.json();
+    if (!response.ok || result.ok !== true) {
+      contactStatus.setAttribute('data-error', '');
+      contactStatus.textContent = '送信を受け付けられませんでした。入力内容を確認して、時間をおいてお試しください。';
+      return;
+    }
+    contactForm.reset();
+    updateBulkFields();
+    contactStatus.textContent = '送信を受け付けました。店舗からの返信をお待ちください。';
   } catch {
-    contactText.focus();
-    contactText.select();
-    copyStatus.textContent = '選択された内容をコピーし、公式フォームに貼り付けてください。';
+    contactStatus.setAttribute('data-error', '');
+    contactStatus.textContent = '送信結果を確認できませんでした。返信が届かない場合は店舗のInstagramからご連絡ください。';
+  } finally {
+    contactFields.disabled = false;
+    contactSubmit.disabled = false;
   }
 });
 
-contactForm.hidden = false;
+if (endpoint) {
+  contactHelp.textContent = 'ご入力いただいた情報は、お問い合わせへの対応と返信に使用します。';
+  contactFields.disabled = false;
+  contactSubmit.disabled = false;
+}

@@ -123,30 +123,31 @@
         <a class="text-link" href="https://www.instagram.com/gotochigurume_hachioji/" target="_blank" rel="noopener">八王子川口店のInstagram</a>
       </div>
       <div class="contact-panel">
-        <h3>お問い合わせ内容</h3>
-        <form id="contact-draft" hidden aria-describedby="contact-help">
-          <p id="contact-help" class="note">内容をまとめてコピーし、公式フォームに貼り付けて送信してください。</p>
-          <label>ご用件
-            <select name="topic">
-              <option value="大量注文のご相談">大量注文のご相談</option>
-              <option value="商品・在庫のお問い合わせ">商品・在庫のお問い合わせ</option>
-              <option value="その他のお問い合わせ">その他のお問い合わせ</option>
-            </select>
-          </label>
-          <fieldset id="bulk-fields">
-            <legend class="sr-only">大量注文の希望内容</legend>
-            <label>商品名・数量 <span class="optional">任意</span><input name="items" maxlength="180" placeholder="例　餃子 20パック"></label>
-            <label>希望受取日 <span class="optional">任意</span><input name="pickup" type="date"></label>
+        <h3>八王子川口店へのお問い合わせ</h3>
+        <p id="contact-help" class="contact-availability">フォームの送信受付は準備中です。お急ぎの場合は店舗のInstagramをご利用ください。</p>
+        <form id="contact-form" method="post" enctype="multipart/form-data" data-endpoint="" aria-describedby="contact-help">
+          <fieldset id="contact-fields" disabled>
+            <legend class="sr-only">お問い合わせ情報</legend>
+            <div class="contact-identity">
+              <label>お名前 <span class="optional">必須</span><input name="name" autocomplete="name" maxlength="100" required></label>
+              <label>返信先メールアドレス <span class="optional">必須</span><input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+            </div>
+            <label>ご用件
+              <select name="topic">
+                <option value="大量注文のご相談">大量注文のご相談</option>
+                <option value="商品・在庫のお問い合わせ">商品・在庫のお問い合わせ</option>
+                <option value="その他のお問い合わせ">その他のお問い合わせ</option>
+              </select>
+            </label>
+            <div id="bulk-fields">
+              <label>商品名・数量 <span class="optional">任意</span><input name="items" maxlength="180" placeholder="例　餃子 20パック"></label>
+              <label>希望受取日 <span class="optional">任意</span><input name="pickup" type="date"></label>
+            </div>
+            <label>ご相談内容 <span class="optional">必須</span><textarea name="message" rows="4" maxlength="1500" required placeholder="詳しいご希望を入力してください"></textarea></label>
           </fieldset>
-          <label>ご相談内容 <span class="optional">必須</span><textarea name="message" rows="4" maxlength="1500" required placeholder="詳しいご希望を入力してください"></textarea></label>
-          <button type="submit" class="pill secondary">送信用の内容を作成</button>
-          <div id="contact-result" hidden>
-            <label>公式フォームに貼り付ける内容<textarea id="contact-text" rows="6" readonly></textarea></label>
-            <button id="copy-inquiry" type="button" class="pill secondary">内容をコピー</button>
-            <p id="copy-status" class="note" role="status"></p>
-          </div>
+          <button id="contact-submit" type="submit" class="pill primary" disabled>店舗へ送信する</button>
+          <p id="contact-status" class="contact-feedback" role="status" aria-live="polite"></p>
         </form>
-        <a class="pill primary official-contact" href="https://www.gotouchi-gourmet.com/contact/" target="_blank" rel="noopener">公式お問い合わせフォームを開く</a>
       </div>
     </section>
   </main>
