@@ -37,75 +37,55 @@ moreProducts.addEventListener('click', () => {
 filters.hidden = false;
 updateProducts();
 
-const shopForm = document.querySelector('#shop-form');
-const prefecture = document.querySelector('#prefecture');
-const shopQuery = document.querySelector('#shop-query');
-const shopCount = document.querySelector('#shop-count');
-const shopResults = document.querySelector('#shop-results');
-const moreShops = document.querySelector('#more-shops');
-const pageSize = 6;
-let shownShops = pageSize;
-let shops = [];
+const contactForm = document.querySelector('#contact-draft');
+const bulkFields = document.querySelector('#bulk-fields');
+const contactResult = document.querySelector('#contact-result');
+const contactText = document.querySelector('#contact-text');
+const copyStatus = document.querySelector('#copy-status');
+const topic = contactForm.elements.namedItem('topic');
+const message = contactForm.elements.namedItem('message');
 
-function renderShops() {
-  const query = shopQuery.value.trim().normalize('NFKC').toLocaleLowerCase('ja');
-  const matches = shops.filter(shop => {
-    const inPrefecture = !prefecture.value || shop.prefecture === prefecture.value;
-    const searchable = `${shop.prefecture} ${shop.name} ${shop.address}`.normalize('NFKC').toLocaleLowerCase('ja');
-    return inPrefecture && query.split(/\s+/).every(word => searchable.includes(word));
-  });
-  const visible = matches.slice(0, shownShops);
-  const rows = visible.map(shop => {
-    const row = document.createElement('li');
-    const link = document.createElement('a');
-    const name = document.createElement('strong');
-    const address = document.createElement('span');
-    const detail = document.createElement('span');
-    link.href = shop.url;
-    name.textContent = shop.name;
-    address.textContent = shop.address;
-    detail.className = 'store-detail';
-    detail.textContent = '店舗詳細';
-    link.append(name, address, detail);
-    row.append(link);
-    return row;
-  });
-  shopResults.replaceChildren(...rows);
-  shopCount.textContent = matches.length
-    ? `${matches.length}件中 ${visible.length}件を表示`
-    : '条件に合う店舗が見つかりません。都道府県やキーワードを変えて検索してください。';
-  moreShops.hidden = visible.length >= matches.length;
-}
+topic.addEventListener('change', () => {
+  const isBulkOrder = topic.selectedIndex === 0;
+  bulkFields.hidden = !isBulkOrder;
+  bulkFields.disabled = !isBulkOrder;
+});
 
-shopForm.addEventListener('submit', event => {
+contactForm.addEventListener('input', () => {
+  message.setCustomValidity('');
+  contactResult.hidden = true;
+  copyStatus.textContent = '';
+});
+
+contactForm.addEventListener('submit', event => {
   event.preventDefault();
-  shownShops = pageSize;
-  renderShops();
-});
-prefecture.addEventListener('change', () => {
-  shownShops = pageSize;
-  renderShops();
-});
-moreShops.addEventListener('click', () => {
-  const firstNewIndex = shownShops;
-  shownShops += pageSize;
-  renderShops();
-  shopResults.children[firstNewIndex]?.firstElementChild.focus();
+  const fields = new FormData(contactForm);
+  const details = fields.get('message').trim();
+  if (!details) {
+    message.setCustomValidity('ご相談内容を入力してください。');
+    message.reportValidity();
+    return;
+  }
+  const lines = ['店舗：八王子川口店', `ご用件：${fields.get('topic')}`];
+  const items = fields.get('items')?.trim();
+  const pickup = fields.get('pickup');
+  if (items) lines.push(`商品名・数量：${items}`);
+  if (pickup) lines.push(`希望受取日：${pickup}`);
+  lines.push('', 'ご相談内容', details);
+  contactText.value = lines.join('\n');
+  contactResult.hidden = false;
+  contactText.focus();
 });
 
-fetch('shops.json')
-  .then(response => {
-    if (!response.ok) throw new Error('Shop list unavailable');
-    return response.json();
-  })
-  .then(data => {
-    shops = data;
-    for (const name of new Set(shops.map(shop => shop.prefecture))) {
-      prefecture.add(new Option(name, name));
-    }
-    shopForm.hidden = false;
-    renderShops();
-  })
-  .catch(() => {
-    shopCount.textContent = '店舗情報を読み込めませんでした。公式の店舗一覧をご利用ください。';
-  });
+document.querySelector('#copy-inquiry').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(contactText.value);
+    copyStatus.textContent = 'コピーしました。公式フォームの「お問い合わせ内容」に貼り付けてください。';
+  } catch {
+    contactText.focus();
+    contactText.select();
+    copyStatus.textContent = '選択された内容をコピーし、公式フォームに貼り付けてください。';
+  }
+});
+
+contactForm.hidden = false;
